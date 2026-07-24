@@ -11,6 +11,14 @@ A plain `pnpm install` rewrites those blocks inline and produces a ~1000-line co
 After bumping a dependency, run `pnpm exec prettier --write pnpm-lock.yaml` so the diff collapses to just the real change.
 CI uses `pnpm install --frozen-lockfile`, which parses the YAML structurally and accepts the Prettier-formatted lockfile, so the formatting does not break the frozen-install check.
 
+## SessionStart hook and config directory patching
+
+`axi-sdk-js@0.1.8` hardcodes `~/.claude` as the target for SessionStart hooks and ignores `CLAUDE_CONFIG_DIR`.
+firstmate's glm crewmates run Claude Code under a redirected config dir (`~/.glm` by default, or `CLAUDE_CONFIG_DIR`/`FM_GLM_CLAUDE_CONFIG_DIR`), so they received no hooks.
+`patches/axi-sdk-js@0.1.8.patch` (applied via `pnpm.patchedDependencies` in `pnpm-workspace.yaml`) applies the upstream fix from evil-skills/axi (commit 9bc4989, PR #1).
+It adds `resolveClaudeSettingsJsonTargets()` which writes to both `~/.claude` and the redirected location (if set), honoring `CLAUDE_CONFIG_DIR` with `FM_GLM_CLAUDE_CONFIG_DIR` fallback.
+**Drop this patch once axi-sdk-js ships the fix on npm** — the lockfile will auto-update to the unpatched version and the patch file can be deleted.
+
 ## The SDK-provided `update` command
 
 `gh-axi` runs its CLI through `runAxiCli` from `axi-sdk-js` (`src/cli.ts`) and registers no `update` command of its own.
